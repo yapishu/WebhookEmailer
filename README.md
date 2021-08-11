@@ -47,7 +47,7 @@ Once BTCPay and Transmuter are installed and configured and you have a store (se
 
 On the Recipe Action screen, select 'Make web request.'
 
-![](transmuter.png)
+![](https://i.imgur.com/l74mWwX.png)
 
 Enter the IP of your Docker interface (`docker0`, enter `ip a` and look through the list). For 'Method', select PUT. 
 
