@@ -2,9 +2,9 @@
 
 ## Introduction
 
-This is my attempt at stringing together [BTCPay Server](https://github.com/btcpayserver/btcpayserver), [SendGrid](https://sendgrid.com/), and rudimentary data management via CSV parsing. This will allow you to collect payment from BTCPay, and automatically trigger an email with a planet code to the email submitted by the customer. 
+This is my attempt at stringing together [BTCPay Server](https://github.com/btcpayserver/btcpayserver), [SendGrid](https://sendgrid.com/), and rudimentary data management via CSV parsing. This will allow you to collect payment from BTCPay, and automatically trigger an email with a planet code to the email submitted by the customer. This repo contains the webhook configuration, and the shell script that it triggers. This configuration assumes you are running the webhook on the host device of the Docker image, but you don't have to.
 
-You need to have a SendGrid account with a validated email, API key, and [dynamic template](https://mc.sendgrid.com/dynamic-templates) -- you get 100 emails/day with a free account.
+You need to have a SendGrid account with a validated email, API key, and [dynamic template](https://mc.sendgrid.com/dynamic-templates) -- you get 100 emails/day with a free account. You will also need to provide it with a CSV of planets & codes, but a test set is included.
 
 ## Configuration
 
@@ -14,10 +14,9 @@ First install the prereqs:
 $> sudo apt install jq curl webhook
 ```
 
-Open `webhookMailer.sh` and edit the first block of variables with your information. A CSV with test data is included -- this script is written to parse CSVs by identifying the first available row with two columns of data (name and code), extract the data, and append sales info. The next time it is run, it will choose the next row down. There is no accommodation for running out of rows, so keep an eye on it (BTCPay allows you to set inventory numbers -- I recommend aligning
-this with the number of entries in your CSV). 
+Open `webhookMailer.sh` and edit the first block of variables with your information. A CSV with test data is included -- this script is written to parse CSVs by identifying the first available row with two columns of data (name and code), extract the data, and append sales info. The next time it is run, it will choose the next row down. There is no accommodation for running out of rows, so keep an eye on it (BTCPay allows you to set inventory numbers -- I recommend aligning this with the number of entries in your CSV). 
 
-You can test it by running the hook:
+You can test it by running the hook; edit `emailer.json` with the correct path to the shell script and username to run it as first:
 
 ```
 $> webhook -hooks emailer.json -verbose
@@ -47,7 +46,7 @@ Once BTCPay and Transmuter are installed and configured and you have a store (se
 
 On the Recipe Action screen, select 'Make web request.'
 
-![](https://i.imgur.com/l74mWwX.png)
+![](transmuter.png)
 
 Enter the IP of your Docker interface (`docker0`, enter `ip a` and look through the list). For 'Method', select PUT. 
 
