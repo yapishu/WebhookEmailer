@@ -8,12 +8,12 @@
 ###########################################
 #
 # About:
-# Btctransmuter submits POST request to webhook.
-# The POST contains json with email & auth key.
+# Btctransmuter submits PUT request to webhook.
+# The PUT contains json with email & auth key.
 # Webhook passes to shell script, which validates
 #+ the email address and password.
 # The email is then passed to the rest of the script,
-# where a new planet code extracted, marked as used,
+#+ where a new planet code extracted, marked as used,
 #+ and emailed to the address.
 # You can test this script like this:
 # ./webhookMailer.sh "{\"auth\":\"secret_password\",\"email\":\"user.name@gmail.com\"}"
@@ -28,7 +28,7 @@ CSV_FILE="TestPlanets.csv"
 SENDGRID_API_KEY="SG.placeholder"
 FROM_EMAIL="Your email here"
 FROM_NAME="Your name here"
-# This shold be a long hex string
+# This should be a long hex string
 SG_TEMPLATE="d-placeholder"
 # You can make one at https://mc.sendgrid.com/dynamic-templates
 

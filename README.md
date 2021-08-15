@@ -16,7 +16,7 @@ $> sudo apt install jq curl webhook
 
 Open `webhookMailer.sh` and edit the first block of variables with your information. A CSV with test data is included -- this script is written to parse CSVs by identifying the first available row with two columns of data (name and code), extract the data, and append sales info. The next time it is run, it will choose the next row down. There is no accommodation for running out of rows, so keep an eye on it (BTCPay allows you to set inventory numbers -- I recommend aligning this with the number of entries in your CSV). 
 
-You can test it by running the hook; edit `emailer.json` to correct the username and path to the shell script before you run it.
+You can test it by running the hook; edit `emailer.json` to correct the path to the shell script before you run it.
 
 ```
 $> webhook -hooks emailer.json -verbose
@@ -27,6 +27,23 @@ Then curling a fake request and making sure it executes properly:
 ```
 $> curl -H Content-Type: application/json -d {"auth":"long_password","email":"your.email@gmail.com"} -X PUT http://localhost:9000/hooks/emailer
 ```
+
+Note that this has basic password protection, but was designed assuming that the webhook is not exposed to the internet. If it is, you should probably not accept connections from any non-whitelisted IP addresses. `webhook` supports this [via configuration](https://github.com/adnanh/webhook/blob/master/docs/Hook-Examples.md#incoming-bitbucket-webhook):
+
+```
+"trigger-rule":
+    {
+      "match":
+      {
+        "type": "ip-whitelist",
+        "ip-range": "104.192.143.0/24"
+      }
+    }
+```
+
+CIDR notation -- if you just want to whitelist a single address, put `/32` at the end. 
+
+Or, you can set firewall rules on your host. 
 
 ### systemd
 
