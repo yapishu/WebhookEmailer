@@ -16,7 +16,7 @@ $> sudo apt install jq curl webhook
 
 Open `webhookMailer.sh` and edit the first block of variables with your information. A CSV with test data is included -- this script is written to parse CSVs by identifying the first available row with two columns of data (name and code), extract the data, and append sales info. The next time it is run, it will choose the next row down. There is no accommodation for running out of rows, so keep an eye on it (BTCPay allows you to set inventory numbers -- I recommend aligning this with the number of entries in your CSV). 
 
-You can test it by running the hook; edit `emailer.json` with the correct path to the shell script and username to run it as first:
+You can test it by running the hook; edit `emailer.json` to correct the username and path to the shell script before you run it.
 
 ```
 $> webhook -hooks emailer.json -verbose
