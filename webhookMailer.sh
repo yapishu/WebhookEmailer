@@ -50,10 +50,12 @@ APPEND_STRING=`echo ,$EMAIL_EXTRACT,$TIMESTAMP`
 CSV_CONTENT=`awk -F, '!length($3)' $CSV_FILE`
 # Snip the first one
 UNUSED_LINE=(${CSV_CONTENT[@]})
-# Snip out the @p & planet code
+# Snip out the @p, URL, and planet code
 UNUSED_CODE=`echo $UNUSED_LINE | cut -c 16-58`
 UNUSED_NAME=`echo $UNUSED_LINE | cut -c 1-14`
+CODE_TEXT=`echo $UNUSED_CODE | cut -c 17-44`
 # JSON payloads for SendGrid
+# Use the dynamic_template_data vars in your template
 REQUEST_DATA='{ "from": {
                 "email": "'${FROM_EMAIL}'",
                 "name": "'${FROM_NAME}'"
@@ -67,7 +69,8 @@ REQUEST_DATA='{ "from": {
 				 }],
         "dynamic_template_data": {
                 "planet-code": "'${UNUSED_CODE}'",
-                "planet-name": "'${UNUSED_NAME}'"
+                "planet-name": "'${UNUSED_NAME}'",
+                "code-text":"'${CODE_TEXT}'"
         }
 			}],
         "template_id": "'${SG_TEMPLATE}'"
