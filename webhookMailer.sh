@@ -51,7 +51,7 @@ CSV_CONTENT=`awk -F, '!length($3)' $CSV_FILE`
 # Snip the first one
 UNUSED_LINE=(${CSV_CONTENT[@]})
 # Snip out the @p & planet code
-UNUSED_CODE=`echo $UNUSED_LINE | cut -c 16-42`
+UNUSED_CODE=`echo $UNUSED_LINE | cut -c 16-58`
 UNUSED_NAME=`echo $UNUSED_LINE | cut -c 1-14`
 # JSON payloads for SendGrid
 REQUEST_DATA='{ "from": {
@@ -92,6 +92,10 @@ function isEmailValid() {
     [[ "${1}" =~ $regex  ]]
 }
 
+# Exclusive lock on executing script to avoid double-spends
+(
+flock -x -w 10 200 || exit 1
+
 # Check whether auth code matches
 if [ "$AUTH_EXTRACT" = "$AUTH_CODE" ];then
        echo "$TIMESTAMP // Authentication succeeded: $AUTH_EXTRACT" | tee -a "$LOG_FILE"
@@ -117,3 +121,4 @@ if [ "$AUTH_EXTRACT" = "$AUTH_CODE" ];then
 fi
     else echo "$TIMESTAMP // Failed validation: $AUTH_EXTRACT does not match $AUTH_CODE" | tee -a "$LOG_FILE"
 fi
+) 200>lock.file
