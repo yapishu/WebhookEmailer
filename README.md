@@ -11,7 +11,7 @@ You need to have a SendGrid account with a validated email, API key, and [dynami
 First install the prereqs:
 
 ```
-$> sudo apt install jq curl webhook csvkit
+$> sudo apt install jq curl webhook
 ```
 
 Open `webhookMailer.sh` and edit the first block of variables with your information. A CSV with test data is included -- this script is written to parse CSVs by identifying the first available row with two columns of data (name and code), extract the data, and append sales info. The next time it is run, it will choose the next row down. There is no accommodation for running out of rows, so keep an eye on it (BTCPay allows you to set inventory numbers -- I recommend aligning this with the number of entries in your CSV). 
@@ -47,7 +47,7 @@ Or, you can set firewall rules on your host.
 
 ### systemd
 
-Included is a systemd module. Edit the username and path, copy it and enable it:
+Included is a systemd module. **Edit the username and path** in the file, then copy it and enable it:
 
 ```
 $> sudo cp emailer.service /etc/systemd/system/emailer.service
@@ -75,8 +75,23 @@ In the body, enter the JSON that will be submitted with your static passcode and
 
 (The password should match the one at the top of `webhookMailer.sh`).
 
-Create a store listing for an item that costs $0 to test.
+You can create a store listing for an item that costs $0 to test.
+
 
 ## Troubleshooting
 
 There is a primitive logging system implemented -- look at `Transactions.log` and see if it's catching on anything. 
+
+If you need to test different layers, you can curl the webhook directly from the command line:
+
+```
+curl -H Content-Type: application/json -d {"auth":"putapasswordhere","email":"test.email@gmail.com"} -X PUT http://localhost:9000/hooks/emailer
+```
+
+Or, you can submit json parameters to the shell script itself:
+
+```
+./webhookMailer.sh "{\"auth\":\"secret_password\",\"email\":\"user.name@gmail.com\"}"
+```
+
+If something breaks, poking between these layers should help you narrow it down.

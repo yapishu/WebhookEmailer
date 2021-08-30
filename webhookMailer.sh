@@ -1,26 +1,24 @@
 #!/bin/bash
+########################################################
+#                                                      #
+# ⟖ L2 planet sale webhook script ⟕                    #
+#                  ~sitful-hatred                      #
+#                                                      #
+########################################################
+#                                                      #
+# About:                                               #
+# Btctransmuter submits PUT request to webhook.        #
+# The PUT contains json with email & auth key.         #
+# Webhook passes to shell script, which validates      #
+#+ the email address and password.                     #
+# The email is then passed to the rest of the script,  #
+#+ where a new planet code extracted, marked as used,  #
+#+ and emailed to the address.                         #
+# See Readme for instructions & troubleshooting        #
+#                                                      #
+########################################################
 #
-###########################################
-# L2 planet sale webhook script
-# ~sitful-hatred
-# Requires jq & curl (sudo apt install jq curl)
-#
-###########################################
-#
-# About:
-# Btctransmuter submits PUT request to webhook.
-# The PUT contains json with email & auth key.
-# Webhook passes to shell script, which validates
-#+ the email address and password.
-# The email is then passed to the rest of the script,
-#+ where a new planet code extracted, marked as used,
-#+ and emailed to the address.
-# You can test this script like this:
-# ./webhookMailer.sh "{\"auth\":\"secret_password\",\"email\":\"user.name@gmail.com\"}"
-#
-###########################################
-#
-#+++ Edit these
+### Edit these ⟀
 # Code for webhook to authenticate (20+ chars recommended)
 AUTH_CODE="put a nice long password here"
 # Path to CSV
@@ -32,7 +30,7 @@ FROM_NAME="Your name here"
 SG_TEMPLATE="d-placeholder"
 # You can make one at https://mc.sendgrid.com/dynamic-templates
 
-#+++ Don't edit these
+### Don't edit these ⟀
 input=$1
 LOG_FILE="Transaction.log"
 TIMESTAMP=`date "+%Y.%m.%d-%H:%M:%S"`
