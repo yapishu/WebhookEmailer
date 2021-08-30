@@ -11,7 +11,7 @@ You need to have a SendGrid account with a validated email, API key, and [dynami
 First install the prereqs:
 
 ```
-$> sudo apt install jq curl webhook
+$> sudo apt install jq curl webhook csvkit
 ```
 
 Open `webhookMailer.sh` and edit the first block of variables with your information. A CSV with test data is included -- this script is written to parse CSVs by identifying the first available row with two columns of data (name and code), extract the data, and append sales info. The next time it is run, it will choose the next row down. There is no accommodation for running out of rows, so keep an eye on it (BTCPay allows you to set inventory numbers -- I recommend aligning this with the number of entries in your CSV). 

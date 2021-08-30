@@ -54,6 +54,7 @@ UNUSED_LINE=(${CSV_CONTENT[@]})
 UNUSED_CODE=`echo $UNUSED_LINE | cut -c 16-58`
 UNUSED_NAME=`echo $UNUSED_LINE | cut -c 1-14`
 CODE_TEXT=`echo $UNUSED_CODE | cut -c 17-44`
+LINE_NUM=`grep -Fn $UNUSED_NAME, $CSV_FILE | cut -c 1`
 # JSON payloads for SendGrid
 # Use the dynamic_template_data vars in your template
 REQUEST_DATA='{ "from": {
@@ -95,6 +96,9 @@ function isEmailValid() {
     [[ "${1}" =~ $regex  ]]
 }
 
+# TODO:
+# Check whether CSV contains all column titles, append if not
+
 # Exclusive lock on executing script to avoid double-spends
 (
 flock -x -w 10 200 || exit 1
@@ -111,8 +115,8 @@ if [ "$AUTH_EXTRACT" = "$AUTH_CODE" ];then
 				-d "$REQUEST_DATA"
 			echo "$TIMESTAMP // Email sent to $EMAIL_EXTRACT" | tee -a "$LOG_FILE"
 # Append sale to CSV line and strip double-commas
-				sed -i "s/^$UNUSED_LINE/$UNUSED_LINE$APPEND_STRING/g" $CSV_FILE
-				sed -i "s/^,,/,/g" $CSV_FILE
+			sed -i ''${LINE_NUM}'s/$/'${APPEND_STRING}'/' $CSV_FILE
+            sed -i "s/,,/,/g" $CSV_FILE
 			echo "$TIMESTAMP // Transaction completed: $UNUSED_LINE,$EMAIL_EXTRACT,$TIMESTAMP" | tee -a "$LOG_FILE"
 
         else echo "$TIMESTAMP // $EMAIL_EXTRACT did not pass validation"  | tee -a "$LOG_FILE"
