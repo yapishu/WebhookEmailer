@@ -52,7 +52,7 @@ UNUSED_LINE=(${CSV_CONTENT[@]})
 UNUSED_CODE=`echo $UNUSED_LINE | cut -c 16-58`
 UNUSED_NAME=`echo $UNUSED_LINE | cut -c 1-14`
 CODE_TEXT=`echo $UNUSED_CODE | cut -c 17-44`
-LINE_NUM=`grep -Fn $UNUSED_NAME, $CSV_FILE | cut -c 1`
+LINE_NUM=`grep -Fn $UNUSED_NAME, $CSV_FILE | grep -Eo '[0-9]{1,4}'`
 # JSON payloads for SendGrid
 # Use the dynamic_template_data vars in your template
 REQUEST_DATA='{ "from": {
