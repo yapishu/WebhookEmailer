@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This is my attempt at stringing together [BTCPay Server](https://github.com/btcpayserver/btcpayserver), [SendGrid](https://sendgrid.com/), and rudimentary data management via CSV parsing. This will allow you to collect payment from BTCPay, and automatically trigger an email with a planet code to the email submitted by the customer. This repo contains the webhook configuration, and the shell script that it triggers. This configuration assumes you are running the webhook on the host device running the Docker container, but you don't have to.
+This is my project to connect [BTCPay Server](https://github.com/btcpayserver/btcpayserver), [SendGrid](https://sendgrid.com/), and simple data management via CSV parsing. This will allow you to collect payment from BTCPay, and automatically trigger an email with a planet code to the email submitted by the customer after payment is confirmed. This repo contains the webhook configuration, and the shell script that it triggers. This configuration assumes you are running the webhook on the host device running the Docker container, but you don't have to.
 
 You need to have a SendGrid account with a validated email, API key, and [dynamic template](https://mc.sendgrid.com/dynamic-templates) -- you get 100 emails/day with a free account. You will also need to provide it with a CSV of planets & codes, but a test set is included.
 
@@ -61,7 +61,7 @@ This will allow the webhook to automatically run as a service.
 
 Once BTCPay and Transmuter are installed and configured and you have a store (separate instructions), go to Recipes in the Transmuter menu, and add a new Action Group. 
 
-On the Recipe Action screen, select 'Make web request.'
+Set the recipe to trigger on 'paid'. On the Recipe Action screen, select 'Make web request.'
 
 ![](https://i.imgur.com/l74mWwX.png)
 
