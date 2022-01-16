@@ -41,11 +41,19 @@ EMAIL_EXTRACT=`echo $input|jq -r .email`
 AUTH_EXTRACT=`echo $input|jq -r .auth`
 LOG_FILE="Transaction.log"
 TIMESTAMP=`date "+%Y.%m.%d-%H.%M.%S"`
+# Check if there is already a DB, import if not
+# Else
 # Check if the CSV has already been imported
 # If not, import the contents and mark as imported
 DB=db.sq3
+if [ $DB_ABSENT -eq "1" ]; then
+    sqlite3 $DB '.mode csv' 'import $CSV_FILE planets'
+    echo "IMPORTED_FILE" | tee -a $CSV_FILE
+    mv $CSV_FILE IMPORTED_${CSV_FILE}
+fi
 DB_SELECT="sqlite3 $DB 'SELECT"
 DB_UPDATE="sqlite3 $DB 'UPDATE"
+DB_ABSENT=`test -f db.sq3; echo $?`
 IMPORT_CHECK=`grep -q IMPORTED_FILE "${CSV_FILE}" ; echo $?`
 if [ "$IMPORT_CHECK" -eq "1" ]; then
     # Import CSV to sqlite DB
