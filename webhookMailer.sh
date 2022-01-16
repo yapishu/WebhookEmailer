@@ -1,8 +1,8 @@
 #!/bin/bash
 ########################################################
 #                                                      #
-# ⟖ L2 planet sale webhook script ⟕                    #
-#                  ~sitful-hatred                      #
+#    L2 planet sale webhook script v2                  #
+#            ~sitful-hatred                            #
 #                                                      #
 ########################################################
 #                                                      #
@@ -16,6 +16,9 @@
 #+ and emailed to the address.                         #
 # See Readme for instructions & troubleshooting        #
 #                                                      #
+# V2 update: imports csv to sqlite db and manages      #
+#+ entries there                                       #
+#
 ########################################################
 #
 ### Edit these ⟀
@@ -41,14 +44,10 @@ fi
 input=$1
 LOG_FILE="Transaction.log"
 TIMESTAMP=`date "+%Y.%m.%d-%H:%M:%S"`
-# Parse input for email string
-EMAIL_INPUT=`echo $input|jq .email`
-# Snip the quotes
-EMAIL_EXTRACT=`sed -e 's/^"//' -e 's/"$//' <<<"$EMAIL_INPUT"`
-# Parse payload for auth code
-AUTH_INPUT=`echo $input|jq .auth`
-# Snip the quotes
-AUTH_EXTRACT=`sed -e 's/^"//' -e 's/"$//'<<<"$AUTH_INPUT"`
+# Snip email from input
+EMAIL_EXTRACT=`echo $input|jq -r .email`
+# Snip password from input
+AUTH_EXTRACT=`echo $input|jq -r .auth`
 # Mark CSV entry as sold
 APPEND_STRING=`echo ,$EMAIL_EXTRACT,$TIMESTAMP`
 # Cut out lines with blank 6th column
