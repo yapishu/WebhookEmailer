@@ -16,7 +16,7 @@ $> sudo apt install jq curl webhook sqlite3
 
 Open `webhookMailer.sh` and edit the first block of variables with your information. A CSV with test data is included -- this script is written to import the CSV into a sqlite database, find the first available row in the DB, extract the name and code, and append sales info. The next time it is run, it will choose the next row down. If you run out of rows, it will send you an email (BTCPay allows you to set inventory numbers -- I recommend aligning this with the number of entries in your DB).
 
-The first time your script runs, it will look for a CSV with the name you set as a variable at the top of `webhookMailer.sh` and import it into a DB, then mark it as imported. Do not rename a 'spent' CSV back to that name unless you want duplicate entries in your DB. You can easily query the sales stats of the DB by running `./getStatus.sh`. 
+The first time your script runs, it will look for a CSV with the name you set as a variable at the top of `webhookMailer.sh` and import it into a DB, then mark it as imported. It will not re-import a CSV if it has 'IMPORTED_DATA' appended to it. You can easily query the sales stats of the DB by running `./getStatus.sh`. 
 
 You can test it by running the hook; edit `emailer.json` to correct the path to the shell script before you run it.
 
