@@ -49,13 +49,15 @@ DB=db.sq3
 DB_ABSENT=`test -f db.sq3; echo $?`
 if [ $DB_ABSENT == 1 ]; then
     # Standardize CSV from Bridge
-    FIRST_LINE=`head -n 1 $CSV_FILE`
+    cp $CSV_FILE import.csv
+    FIRST_LINE=`head -n 1 import.csv`
     TITLES="Number,Planet,Invite URL,Point,Ticket,Email,Timestamp"
     # Check if title row has all columns & replace if not
         if [[ "$FIRST_LINE" != "$TITLES" ]]; then
-        sed -i "1s/.*/$TITLES/" $CSV_FILE;
+        sed -i "1s/.*/$TITLES/" import.csv;
         fi
-    sqlite3 $DB '.mode csv' '.import TestPlanets.csv planets'
+    sqlite3 $DB '.mode csv' '.import import.csv planets'
+    rm -f import.csv
     echo "IMPORTED_FILE" | tee -a $CSV_FILE
     mv $CSV_FILE IMPORTED_${CSV_FILE}
 fi
