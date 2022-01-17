@@ -46,20 +46,29 @@ TIMESTAMP=`date "+%Y.%m.%d-%H.%M.%S"`
 # Check if the CSV has already been imported
 # If not, import the contents and mark as imported
 DB=db.sq3
-if [ $DB_ABSENT -eq "1" ]; then
-    sqlite3 $DB '.mode csv' 'import $CSV_FILE planets'
+DB_ABSENT=`test -f db.sq3; echo $?`
+if [ $DB_ABSENT == 1 ]; then
+    # Standardize CSV from Bridge
+    FIRST_LINE=`head -n 1 $CSV_FILE`
+    TITLES="Number,Planet,Invite URL,Point,Ticket,Email,Timestamp"
+    # Check if title row has all columns & replace if not
+        if [[ "$FIRST_LINE" != "$TITLES" ]]; then
+        sed -i "1s/.*/$TITLES/" $CSV_FILE;
+        fi
+    sqlite3 $DB '.mode csv' '.import TestPlanets.csv planets'
     echo "IMPORTED_FILE" | tee -a $CSV_FILE
     mv $CSV_FILE IMPORTED_${CSV_FILE}
 fi
+
 DB_SELECT="sqlite3 $DB 'SELECT"
 DB_UPDATE="sqlite3 $DB 'UPDATE"
-DB_ABSENT=`test -f db.sq3; echo $?`
 IMPORT_CHECK=`grep -q IMPORTED_FILE "${CSV_FILE}" ; echo $?`
-if [ "$IMPORT_CHECK" -eq "1" ]; then
+
+if [ $IMPORT_CHECK -eq "1" ]; then
     # Import CSV to sqlite DB
     # --import was added in 3.32
     tail -n +2 "$CSV_FILE" > import.csv
-    sqlite3 $DB '.mode csv' 'import import.csv planets'
+    sqlite3 $DB '.mode csv' '.import import.csv planets'
     rm import.csv
     # Change numbers to match rowid
     eval "$DB_UPDATE planet SET Number = rowid;'"
@@ -70,7 +79,7 @@ fi
 
 # Sqlite operation vars
 FIND_UNUSED="FROM planets WHERE Email is NULL LIMIT 1;'"
-APPEND_UNUSED="WHERE Email is NULL LIMIT 1;''"
+APPEND_UNUSED="WHERE Email is NULL LIMIT 1;'"
 LINE_NUM=`eval "$DB_SELECT rowid $FIND_UNUSED"`
 UNUSED_CODE=`eval "$DB_SELECT \"Invite URL\" $FIND_UNUSED"`
 UNUSED_NAME=`eval "$DB_SELECT Planet $FIND_UNUSED"`
@@ -85,16 +94,16 @@ REQUEST_DATA='{ "from": {
         "personalizations": [{
                 "to": [{
                  "email": "'${EMAIL_EXTRACT}'"
-        	     }],
-				 "bcc": [{
-				 "email": "'${FROM_EMAIL}'"
-				 }],
+                     }],
+                                 "bcc": [{
+                                 "email": "'${FROM_EMAIL}'"
+                                 }],
         "dynamic_template_data": {
                 "planet-code": "'${UNUSED_CODE}'",
                 "planet-name": "'${UNUSED_NAME}'",
                 "code-text":"'${CODE_TEXT}'"
         }
-			}],
+                        }],
         "template_id": "'${SG_TEMPLATE}'"
 }';
 BOUNCE_DATA='{ "from": {
@@ -104,11 +113,11 @@ BOUNCE_DATA='{ "from": {
         "personalizations": [{
                 "to": [{
                  "email": "'${FROM_EMAIL}'"
-        	     }],
-			}],
+                     }],
+                        }],
         "subject": "Email validation failure",
-		"content":
-			[{"type": "text/plain", "value": "Email address validation failed, check logs"}]
+                "content":
+                        [{"type": "text/plain", "value": "Email address validation failed, check logs"}]
 }';
 WARN_DATA='{ "from": {
                 "email": "'${FROM_EMAIL}'",
@@ -117,15 +126,15 @@ WARN_DATA='{ "from": {
         "personalizations": [{
                 "to": [{
                  "email": "'${FROM_EMAIL}'"
-        	     }],
-			}],
+                     }],
+                        }],
         "subject": "WARNING: Final planet sold",
-		"content":
-			[{"type": "text/plain", "value": "No more planets available for sale, restock"}]
+                "content":
+                        [{"type": "text/plain", "value": "No more planets available for sale, restock"}]
 }';
 
 # Debug output
-                        echo $REQUEST_DATA
+                        echo $input
                         echo "$CODE_TEXT"
 
 # Function to validate email address
@@ -144,23 +153,23 @@ if [ "$AUTH_EXTRACT" = "$AUTH_CODE" ];then
 # Validate email
         if isEmailValid "$EMAIL_EXTRACT" ;then
 # Email is valid send email
-			curl -X "POST" "https://api.sendgrid.com/v3/mail/send" \
-				-H "Authorization: Bearer $SENDGRID_API_KEY" \
-				-H "Content-Type: application/json" \
-				-d "$REQUEST_DATA" >> $LOG_FILE
-			echo  -e "\n$TIMESTAMP // Email sent to $EMAIL_EXTRACT" | tee -a "$LOG_FILE"
+                        curl -X "POST" "https://api.sendgrid.com/v3/mail/send" \
+                                -H "Authorization: Bearer $SENDGRID_API_KEY" \
+                                -H "Content-Type: application/json" \
+                                -d "$REQUEST_DATA" >> $LOG_FILE
+                        echo  -e "\n$TIMESTAMP // Email sent to $EMAIL_EXTRACT" | tee -a "$LOG_FILE"
 # Mark planet row as sold
-            eval "$DB_UPDATE SET Email = \"${EMAIL_EXTRACT}\", \
-            Timestamp = \"${TIMESTAMP}\" $APPEND_UNUSED"
-
+            eval "$DB_UPDATE planets SET Email = \"$EMAIL_EXTRACT\", \
+            Timestamp = \"$TIMESTAMP\" $APPEND_UNUSED"
+#            eval "sqlite3 $DB 'UPDATE planets SET Email = '$EMAIL_EXTRACT', Timestamp = $TIMESTAMP WHERE Email is NULL LIMIT 1;'"
 # Invalid email: mark to log
         else echo "$TIMESTAMP // $EMAIL_EXTRACT did not pass validation"  | tee -a "$LOG_FILE"
 
 # Email me if the recipient address is bad
-			curl -X "POST" "https://api.sendgrid.com/v3/mail/send" \
-				-H "Authorization: Bearer $SENDGRID_API_KEY" \
-				-H "Content-Type: application/json" \
-				-d "$BOUNCE_DATA" >> $LOG_FILE
+                        curl -X "POST" "https://api.sendgrid.com/v3/mail/send" \
+                                -H "Authorization: Bearer $SENDGRID_API_KEY" \
+                                -H "Content-Type: application/json" \
+                                -d "$BOUNCE_DATA" >> $LOG_FILE
 
         fi
 
@@ -173,7 +182,7 @@ fi
 if [ $LINE_NUM -eq $DB_COUNT ]; then
 # Email me if no more planets
 curl -X "POST" "https://api.sendgrid.com/v3/mail/send" \
-	-H "Authorization: Bearer $SENDGRID_API_KEY" \
-	-H "Content-Type: application/json" \
-	-d "$WARN_DATA" >> $LOG_FILE
+        -H "Authorization: Bearer $SENDGRID_API_KEY" \
+        -H "Content-Type: application/json" \
+        -d "$WARN_DATA" >> $LOG_FILE
 fi
