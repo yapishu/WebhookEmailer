@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This is my project to connect [BTCPay Server](https://github.com/btcpayserver/btcpayserver), [SendGrid](https://sendgrid.com/), and simple data management via CSV parsing. This will allow you to collect payment from BTCPay, and automatically trigger an email with a planet code to the email submitted by the customer after payment is confirmed. This repo contains the webhook configuration, and the shell script that it triggers. This configuration assumes you are running the webhook on the host device running the Docker container, but you don't have to.
+This is my project to connect [BTCPay Server](https://github.com/btcpayserver/btcpayserver), [SendGrid](https://sendgrid.com/), and simple database management. This will allow you to collect payment from BTCPay, and automatically trigger an email with a planet code to the email submitted by the customer after payment is confirmed. This repo contains the webhook configuration, and the shell script that it triggers. This configuration assumes you are running the webhook on the host device running the Docker container, but you don't have to.
 
 You need to have a SendGrid account with a validated email, API key, and [dynamic template](https://mc.sendgrid.com/dynamic-templates) -- you get 100 emails/day with a free account. You will also need to provide it with a CSV of planets & codes, but a test set is included.
 
@@ -11,10 +11,12 @@ You need to have a SendGrid account with a validated email, API key, and [dynami
 First install the prereqs:
 
 ```
-$> sudo apt install jq curl webhook
+$> sudo apt install jq curl webhook sqlite3
 ```
 
-Open `webhookMailer.sh` and edit the first block of variables with your information. A CSV with test data is included -- this script is written to parse CSVs by identifying the first available row with two columns of data (name and code), extract the data, and append sales info. The next time it is run, it will choose the next row down. There is no accommodation for running out of rows, so keep an eye on it (BTCPay allows you to set inventory numbers -- I recommend aligning this with the number of entries in your CSV). 
+Open `webhookMailer.sh` and edit the first block of variables with your information. A CSV with test data is included -- this script is written to import the CSV into a sqlite database, find the first available row in the DB, extract the name and code, and append sales info. The next time it is run, it will choose the next row down. If you run out of rows, it will send you an email (BTCPay allows you to set inventory numbers -- I recommend aligning this with the number of entries in your DB).
+
+The first time your script runs, it will look for a CSV with the name you set as a variable at the top of `webhookMailer.sh` and import it into a DB, then mark it as imported. It will not re-import a CSV if it has 'IMPORTED_DATA' appended to it. You can easily query the sales stats of the DB by running `./getStatus.sh`. 
 
 You can test it by running the hook; edit `emailer.json` to correct the path to the shell script before you run it.
 
