@@ -25,28 +25,29 @@
 # Code for webhook to authenticate (20+ chars recommended)
 AUTH_CODE="PlaceholderPassword"
 # Path to CSV
-CSV_FILE="TestPlanets.csv"
+CSV_FILE="planets.csv"
 SENDGRID_API_KEY="SG.placeholder"
 FROM_EMAIL="Your email here"
 FROM_NAME="Your name here"
 # This should be a long hex string
 SG_TEMPLATE="d-placeholder"
 # You can make one at https://mc.sendgrid.com/dynamic-templates
+# Be sure to have ${UNUSED_NAME}, ${UNUSED_CODE} 
+# and ${CODE_TEXT} vars in your template
 
 ### Don't edit these ⟀
 input=$1
+LOG_FILE="Transaction.log"
+TIMESTAMP=`date "+%Y.%m.%d-%H.%M.%S"`
+
 # Snip email from input
 EMAIL_EXTRACT=`echo $input|jq -r .email`
 # Snip password from input
 AUTH_EXTRACT=`echo $input|jq -r .auth`
-LOG_FILE="Transaction.log"
-TIMESTAMP=`date "+%Y.%m.%d-%H.%M.%S"`
-# Check if there is already a DB, import if not
-# Else
-# Check if the CSV has already been imported
-# If not, import the contents and mark as imported
+
+# Check if there is already a DB, and import CSV if not
 DB=db.sq3
-DB_ABSENT=`test -f db.sq3; echo $?`
+DB_ABSENT=`test -f $DB; echo $?`
 if [ $DB_ABSENT == 1 ]; then
     # Standardize CSV from Bridge
     cp $CSV_FILE import.csv
@@ -136,8 +137,8 @@ WARN_DATA='{ "from": {
 }';
 
 # Debug output
-                        echo $input
-                        echo "$CODE_TEXT"
+echo $input
+echo "$CODE_TEXT"
 
 # Function to validate email address
 function isEmailValid() {
@@ -152,18 +153,21 @@ flock -x -w 10 200 || exit 1
 # Check whether auth code matches
 if [ "$AUTH_EXTRACT" = "$AUTH_CODE" ];then
        echo "$TIMESTAMP // Authentication succeeded: $AUTH_EXTRACT" | tee -a "$LOG_FILE"
+
 # Validate email
         if isEmailValid "$EMAIL_EXTRACT" ;then
+
 # Email is valid send email
                         curl -X "POST" "https://api.sendgrid.com/v3/mail/send" \
                                 -H "Authorization: Bearer $SENDGRID_API_KEY" \
                                 -H "Content-Type: application/json" \
                                 -d "$REQUEST_DATA" >> $LOG_FILE
                         echo  -e "\n$TIMESTAMP // Email sent to $EMAIL_EXTRACT" | tee -a "$LOG_FILE"
+
 # Mark planet row as sold
             eval "$DB_UPDATE planets SET Email = \"$EMAIL_EXTRACT\", \
             Timestamp = \"$TIMESTAMP\" $APPEND_UNUSED"
-#            eval "sqlite3 $DB 'UPDATE planets SET Email = '$EMAIL_EXTRACT', Timestamp = $TIMESTAMP WHERE Email is NULL LIMIT 1;'"
+
 # Invalid email: mark to log
         else echo "$TIMESTAMP // $EMAIL_EXTRACT did not pass validation"  | tee -a "$LOG_FILE"
 
@@ -180,7 +184,6 @@ fi
 ) 200>lock.file
 
 # Test whether any more planets are available
-
 if [ $LINE_NUM -eq $DB_COUNT ]; then
 # Email me if no more planets
 curl -X "POST" "https://api.sendgrid.com/v3/mail/send" \
