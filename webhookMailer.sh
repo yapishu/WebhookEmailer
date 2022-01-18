@@ -61,6 +61,7 @@ if [ $DB_ABSENT == 1 ]; then
     rm -f import.csv
     echo "IMPORTED_FILE" | tee -a $CSV_FILE
     mv $CSV_FILE IMPORTED_${CSV_FILE}
+    echo "$TIMESTAMP // Database created" | tee -a "$LOG_FILE"
 fi
 
 DB_SELECT="sqlite3 $DB 'SELECT"
@@ -78,6 +79,7 @@ if [ $IMPORT_CHECK -eq "1" ]; then
     # Mark CSV as imported
     echo "IMPORTED_FILE" | tee -a $CSV_FILE
     mv $CSV_FILE IMPORTED_${CSV_FILE}
+    echo "$TIMESTAMP // CSV imported" | tee -a "$LOG_FILE"
 fi
 
 # Sqlite operation vars
@@ -158,26 +160,28 @@ if [ "$AUTH_EXTRACT" = "$AUTH_CODE" ];then
         if isEmailValid "$EMAIL_EXTRACT" ;then
 
 # Email is valid send email
-                        curl -X "POST" "https://api.sendgrid.com/v3/mail/send" \
-                                -H "Authorization: Bearer $SENDGRID_API_KEY" \
-                                -H "Content-Type: application/json" \
-                                -d "$REQUEST_DATA" >> $LOG_FILE
-                        echo  -e "\n$TIMESTAMP // Email sent to $EMAIL_EXTRACT" | tee -a "$LOG_FILE"
+curl -X "POST" "https://api.sendgrid.com/v3/mail/send" \
+        -H "Authorization: Bearer $SENDGRID_API_KEY" \
+        -H "Content-Type: application/json" \
+        -d "$REQUEST_DATA" >> $LOG_FILE
+echo  -e "\n$TIMESTAMP // Email sent to $EMAIL_EXTRACT" | tee -a "$LOG_FILE"
 
 # Mark planet row as sold
-            eval "$DB_UPDATE planets SET Email = \"$EMAIL_EXTRACT\", \
-            Timestamp = \"$TIMESTAMP\" $APPEND_UNUSED"
+eval "$DB_UPDATE planets SET Email = \"$EMAIL_EXTRACT\", \
+Timestamp = \"$TIMESTAMP\" $APPEND_UNUSED"
+REMAINING=$((LINE_NUM-DB_COUNT))
+echo "$TIMESTAMP // $UNUSED_NAME marked as sold to $EMAIL_EXTRACT" | tee -a "$LOG_FILE"
+echo "$REMAINING of $DB_COUNT planet codes remaining" | tee -a "$LOG_FILE"
 
 # Invalid email: mark to log
         else echo "$TIMESTAMP // $EMAIL_EXTRACT did not pass validation"  | tee -a "$LOG_FILE"
 
 # Email me if the recipient address is bad
-                        curl -X "POST" "https://api.sendgrid.com/v3/mail/send" \
-                                -H "Authorization: Bearer $SENDGRID_API_KEY" \
-                                -H "Content-Type: application/json" \
-                                -d "$BOUNCE_DATA" >> $LOG_FILE
-
-        fi
+curl -X "POST" "https://api.sendgrid.com/v3/mail/send" \
+        -H "Authorization: Bearer $SENDGRID_API_KEY" \
+        -H "Content-Type: application/json" \
+        -d "$BOUNCE_DATA" >> $LOG_FILE
+fi
 
     else echo "$TIMESTAMP // Failed validation: $AUTH_EXTRACT does not match $AUTH_CODE" | tee -a "$LOG_FILE"
 fi
