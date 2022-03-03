@@ -3,7 +3,7 @@
 # $> ./getStatus.sh
 ROW_COUNT=`eval "sqlite3 db.sq3 'SELECT COUNT(*) FROM planets;'"`
 AVAIL_ROW=`eval "sqlite3 db.sq3 'SELECT Number FROM planets WHERE Email is NULL LIMIT 1;'"`
-SOLD_COUNT=`echo $(($AVAIL_ROW-1))`
+SOLD_COUNT=`echo $(($AVAIL_ROW))`
 REMAINING=`echo $(($ROW_COUNT-$SOLD_COUNT))`
 
 echo "#######################"

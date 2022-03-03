@@ -32,7 +32,7 @@ FROM_NAME="Your name here"
 # This should be a long hex string
 SG_TEMPLATE="d-placeholder"
 # You can make one at https://mc.sendgrid.com/dynamic-templates
-# Be sure to have ${UNUSED_NAME}, ${UNUSED_CODE} 
+# Be sure to have ${UNUSED_NAME}, ${UNUSED_CODE}
 # and ${CODE_TEXT} vars in your template
 
 ### Don't edit these ⟀
@@ -74,6 +74,9 @@ if [ $IMPORT_CHECK -eq "1" ]; then
     tail -n +2 "$CSV_FILE" > import.csv
     sqlite3 $DB '.mode csv' '.import import.csv planets'
     rm import.csv
+    # Remove duplicate planet rows
+    sqlite3 $DB 'DELETE FROM planets WHERE rowid NOT IN (SELECT MIN(rowid) FROM planets GROUP BY Planet);'
+    sqlite3 $DB 'VACUUM;'
     # Change numbers to match rowid
     eval "$DB_UPDATE planet SET Number = rowid;'"
     # Mark CSV as imported
