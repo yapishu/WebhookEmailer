@@ -147,8 +147,8 @@ echo "$CODE_TEXT"
 
 # Function to validate email address
 function isEmailValid() {
-    regex="^([A-Za-z]+[A-Za-z0-9]*((\.|\-|\_)?[A-Za-z]+[A-Za-z0-9]*){1,})@(([A-Za-z]+[A-Za-z0-9]*)+((\.|\-|\_)?([A-Za-z]+[A-Za-z0-9]*)+){1,})+\.([A-Za-z]{2,})+"
-    [[ "${1}" =~ $regex  ]]
+	[[ "${1}" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$  ]]
+
 }
 
 # Exclusive lock on executing script to avoid double-spends
