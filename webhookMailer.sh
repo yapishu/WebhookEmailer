@@ -18,19 +18,19 @@
 #                                                      #
 # V2 update: imports csv to sqlite db and manages      #
 #+ entries there                                       #
-#
+#                                                      #
 ########################################################
 #
 ### Edit these ⟀
 # Code for webhook to authenticate (20+ chars recommended)
-AUTH_CODE="PlaceholderPassword"
+AUTH_CODE="AUTH_CODE_VAR"
 # Path to CSV
-CSV_FILE="planets.csv"
-SENDGRID_API_KEY="SG.placeholder"
-FROM_EMAIL="Your email here"
-FROM_NAME="Your name here"
+CSV_FILE="CSV_FILE_VAR"
+SENDGRID_API_KEY="SG_API_VAR"
+FROM_EMAIL="FROM_EMAIL_VAR"
+FROM_NAME="FROM_NAME_VAR"
 # This should be a long hex string
-SG_TEMPLATE="d-placeholder"
+SG_TEMPLATE="SG_TEMPLATE_VAR"
 # You can make one at https://mc.sendgrid.com/dynamic-templates
 # Be sure to have ${UNUSED_NAME}, ${UNUSED_CODE}
 # and ${CODE_TEXT} vars in your template
@@ -62,6 +62,7 @@ if [ $DB_ABSENT == 1 ]; then
     echo "IMPORTED_FILE" | tee -a $CSV_FILE
     mv $CSV_FILE IMPORTED_${CSV_FILE}
     echo "$TIMESTAMP // Database created" | tee -a "$LOG_FILE"
+    tail -n 1 $LOG_FILE >> /proc/1/fd/1
 fi
 
 DB_SELECT="sqlite3 $DB 'SELECT"
@@ -83,6 +84,7 @@ if [ $IMPORT_CHECK -eq "1" ]; then
     echo "IMPORTED_FILE" | tee -a $CSV_FILE
     mv $CSV_FILE IMPORTED_${CSV_FILE}
     echo "$TIMESTAMP // CSV imported" | tee -a "$LOG_FILE"
+    tail -n 1 $LOG_FILE >> /proc/1/fd/1
 fi
 
 # Sqlite operation vars
@@ -175,6 +177,7 @@ Timestamp = \"$TIMESTAMP\" $APPEND_UNUSED"
 REMAINING=$((LINE_NUM-DB_COUNT))
 echo "$TIMESTAMP // $UNUSED_NAME marked as sold to $EMAIL_EXTRACT" | tee -a "$LOG_FILE"
 echo "$REMAINING of $DB_COUNT planet codes remaining" | tee -a "$LOG_FILE"
+tail -n 3 $LOG_FILE >> /proc/1/fd/1
 
 # Invalid email: mark to log
         else echo "$TIMESTAMP // $EMAIL_EXTRACT did not pass validation"  | tee -a "$LOG_FILE"
@@ -184,9 +187,11 @@ curl -X "POST" "https://api.sendgrid.com/v3/mail/send" \
         -H "Authorization: Bearer $SENDGRID_API_KEY" \
         -H "Content-Type: application/json" \
         -d "$BOUNCE_DATA" >> $LOG_FILE
+tail -n 2 $LOG_FILE >> /proc/1/fd/1
 fi
 
     else echo "$TIMESTAMP // Failed validation: $AUTH_EXTRACT does not match $AUTH_CODE" | tee -a "$LOG_FILE"
+         tail -n 2 $LOG_FILE >> /proc/1/fd/1
 fi
 ) 200>lock.file
 
@@ -197,4 +202,5 @@ curl -X "POST" "https://api.sendgrid.com/v3/mail/send" \
         -H "Authorization: Bearer $SENDGRID_API_KEY" \
         -H "Content-Type: application/json" \
         -d "$WARN_DATA" >> $LOG_FILE
+echo $WARN_DATA >> /proc/1/fd/1
 fi
