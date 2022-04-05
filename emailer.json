@@ -1,8 +1,8 @@
 [
   {
     "id": "emailer",
-    "execute-command": "/home/reid/emailer/webhookMailer.sh",
-    "command-working-directory": "/home/reid/emailer/",
+    "execute-command": "/data/webhookMailer.sh",
+    "command-working-directory": "/data/",
     "response-message": "Running emailer webhook...",
     "pass-arguments-to-command":
     [
