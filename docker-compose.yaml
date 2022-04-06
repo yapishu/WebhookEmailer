@@ -1,20 +1,22 @@
 version: "3.7"
 
 services:
-  vpn:
+  emailer:
     container_name: netsub-planetshooter
     image: netsub-planetshooter:latest
+    env_file: 
+     - .env
     build: .
     restart: on-failure
     stop_grace_period: 1m
     ports:
-      - 9000:9000
+      - 9090:9000
     environment:
-      - AUTH_CODE_VAR=${AUTH_CODE_VAR}
-      - CSV_FILE_VAR=${CSV_FILE_VAR}
-      - FROM_EMAIL_VAR=${FROM_EMAIL_VAR}
-      - FROM_NAME_VAR=${FROM_NAME_VAR}
-      - SG_API_VAR=${SG_API_VAR}
-      - SG_TEMPLATE_VAR=${SG_TEMPLATE_VAR}
+      AUTH_CODE_VAR: 'testauthcode'
+      CSV_FILE_VAR: $CSV_FILE_VAR
+      FROM_EMAIL_VAR: $FROM_EMAIL_VAR
+      FROM_NAME_VAR: $FROM_NAME_VAR
+      SG_API_VAR: $SG_API_VAR
+      SG_TEMPLATE_VAR: $SG_TEMPLATE_VAR
     volumes:
-      - /local/path/here:/data/user
+      - /home/reid/docker/test:/etc/webhook/data

@@ -37,7 +37,7 @@ SG_TEMPLATE="SG_TEMPLATE_VAR"
 
 ### Don't edit these ⟀
 input=$1
-LOG_FILE="/data/user/Transaction.log"
+LOG_FILE="/etc/webhook/data/Transaction.log"
 TIMESTAMP=`date "+%Y.%m.%d-%H.%M.%S"`
 
 # Snip email from input
@@ -46,7 +46,7 @@ EMAIL_EXTRACT=`echo $input|jq -r .email`
 AUTH_EXTRACT=`echo $input|jq -r .auth`
 
 # Check if there is already a DB, and import CSV if not
-DB=/data/user/db.sq3
+DB="/etc/webhook/data/db.sq3"
 DB_ABSENT=`test -f $DB; echo $?`
 if [ $DB_ABSENT == 1 ]; then
     # Standardize CSV from Bridge
@@ -177,7 +177,7 @@ Timestamp = \"$TIMESTAMP\" $APPEND_UNUSED"
 REMAINING=$((LINE_NUM-DB_COUNT))
 echo "$TIMESTAMP // $UNUSED_NAME marked as sold to $EMAIL_EXTRACT" | tee -a "$LOG_FILE"
 echo "$REMAINING of $DB_COUNT planet codes remaining" | tee -a "$LOG_FILE"
-/bin/sh /data/getStats.sh >> /proc/1/fd/1
+/bin/ash /etc/webhook/data/getStatus.sh >> /proc/1/fd/1
 
 # Invalid email: mark to log
         else echo "$TIMESTAMP // $EMAIL_EXTRACT did not pass validation"  | tee -a "$LOG_FILE"
