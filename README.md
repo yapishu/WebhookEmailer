@@ -18,19 +18,13 @@ Open `webhookMailer.sh` and edit the first block of variables with your informat
 
 The first time your script runs, it will look for a CSV with the name you set as a variable at the top of `webhookMailer.sh` and import it into a DB, then mark it as imported. It will not re-import a CSV if it has 'IMPORTED_DATA' appended to it. You can easily query the sales stats of the DB by running `./getStatus.sh`. 
 
-You can test it by running the hook; edit `emailer.json` to correct the path to the shell script before you run it.
+Edit `emailer.json` to correct the path to the shell script before you run it.
 
 ```
 $> webhook -hooks emailer.json -verbose
 ```
 
-Then curling a fake request and making sure it executes properly:
-
-```
-$> curl -H Content-Type: application/json -d {"auth":"long_password","email":"your.email@gmail.com"} -X PUT http://localhost:9000/hooks/emailer
-```
-
-Note that this has basic password protection, but was designed assuming that the webhook is not exposed to the internet. If it is, you should probably not accept connections from any non-whitelisted IP addresses. `webhook` supports this [via configuration](https://github.com/adnanh/webhook/blob/master/docs/Hook-Examples.md#incoming-bitbucket-webhook):
+Note that this was designed assuming that the webhook is not exposed to the internet. If it is, you should probably not accept connections from any non-whitelisted IP addresses. `webhook` supports this [via configuration](https://github.com/adnanh/webhook/blob/master/docs/Hook-Examples.md#incoming-bitbucket-webhook):
 
 ```
 "trigger-rule":
@@ -59,41 +53,18 @@ $> sudo systemctl start emailer
 
 This will allow the webhook to automatically run as a service.
 
-## Connecting to BtcTransmuter
+## Connecting to BtcPay
 
-Once BTCPay and Transmuter are installed and configured and you have a store (separate instructions), go to Recipes in the Transmuter menu, and add a new Action Group. 
+Once BTCPay and is installed and configured and you have a store (separate instructions), go to `Settings` > `Access Tokens`, and generate a legacy API key. 
 
-Set the recipe to trigger on 'paid'. On the Recipe Action screen, select 'Make web request.'
+Copy the base64-encoded version of your API key:
 
-![](https://i.imgur.com/l74mWwX.png)
+![](https://i.imgur.com/G4RiTY1.png)
 
-Enter the IP of your Docker interface (`docker0`, enter `ip a` and look through the list). For 'Method', select PUT. 
+Use this to set your `BTCPAY_API_KEY` variable in `webhookMailer.sh`.
 
-In the body, enter the JSON that will be submitted with your static passcode and the customer email variable:
-
-```
-{"auth":"yourlongpasswordhere","email":"{{TriggerData.Invoice.Buyer.email}}"}
-```
-
-(The password should match the one at the top of `webhookMailer.sh`).
-
-You can create a store listing for an item that costs $0 to test.
-
-
-## Troubleshooting
+Next, select your store's 'app' from the left-hand menu in BTCPay, scroll down, and expand `Notification URL Callbacks`. Enter the address of your webhook (e.g. `http://172.17.0.1:9000/hooks/emailer`).
+ 
+After configuring your script and renaming the test data CSV, you can create a store listing for an item that costs $0 to test.
 
 There is a primitive logging system implemented -- look at `Transactions.log` and see if it's catching on anything. 
-
-If you need to test different layers, you can curl the webhook directly from the command line:
-
-```
-curl -H Content-Type: application/json -d {"auth":"putapasswordhere","email":"test.email@gmail.com"} -X PUT http://localhost:9000/hooks/emailer
-```
-
-Or, you can submit json parameters to the shell script itself:
-
-```
-./webhookMailer.sh "{\"auth\":\"secret_password\",\"email\":\"user.name@gmail.com\"}"
-```
-
-If something breaks, poking between these layers should help you narrow it down.

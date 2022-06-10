@@ -1,0 +1,13 @@
+WARN_DATA='{ "from": {
+                "email": "'${FROM_EMAIL}'",
+                "name": "'${FROM_NAME}'"
+        },
+        "personalizations": [{
+            "to": [{
+            "email": "'${FROM_EMAIL}'"
+            }],
+        }],
+        "subject": "WARNING: Final planet sold",
+            "content":
+                [{"type": "text/plain", "value": "No more planets available for sale, restock"}]
+}';

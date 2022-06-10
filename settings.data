@@ -1,0 +1,12 @@
+# Path to CSV
+FROM_EMAIL="example@test.com"
+FROM_NAME="Arvo Ames"
+# The name of the CSV the script will import
+CSV_FILE="planets.csv"
+SENDGRID_API_KEY="SG._________"
+# Base64 Legacy API key from store settings > access tokens
+BTCPAY_API_KEY="_____________________________"
+# URL your webhook host can reach your BTCPayServer at
+BTCPAY_API_URL="http://localhost:80"
+# https://mc.sendgrid.com/dynamic-templates
+SG_TEMPLATE="d-___________"

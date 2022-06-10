@@ -1,1 +1,0 @@
-curl -H "Content-Type: application/json" -d "{\"auth\":\"PlaceholderPassword\",\"email\":\"test.email@gmail.com\"}" -X PUT http://127.0.0.1:9000/hooks/emailer
