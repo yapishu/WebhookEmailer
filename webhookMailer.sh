@@ -94,7 +94,7 @@ then
                 # Change numbers to match rowid
                 eval "$DB_UPDATE planet SET Number = rowid;'"
                 # Mark CSV as imported
-                echo "IMPORTED_FILE"
+                echo "IMPORTED_FILE" | tee -a $CSV_FILE
                 mv $CSV_FILE IMPORTED_${CSV_FILE}
                 echo "$TIMESTAMP // CSV imported"
         fi
