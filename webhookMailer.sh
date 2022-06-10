@@ -48,7 +48,6 @@ EMAIL_EXTRACT=`curl -X GET ${BTCPAY_API_URL}/invoices/${INVOICE} \
 # Store Sqlite operation vars
 DB_SELECT="sqlite3 $DB 'SELECT"
 DB_UPDATE="sqlite3 $DB 'UPDATE"
-IMPORT_CHECK=`grep -q IMPORTED_FILE "${CSV_FILE}" ; echo $?`
 FIND_UNUSED="FROM planets WHERE Email is NULL LIMIT 1;'"
 APPEND_UNUSED="WHERE Email is NULL LIMIT 1;'"
 LINE_NUM=`eval "$DB_SELECT rowid $FIND_UNUSED"`
@@ -82,6 +81,7 @@ then
         fi
 
         # Import CSV into DB, format & deduplicate
+        IMPORT_CHECK=`grep -q IMPORTED_FILE "${CSV_FILE}" ; echo $?`
         if [ $IMPORT_CHECK -eq "1" ]; then
                 # Import CSV to sqlite DB
                 # --import was added in 3.32
