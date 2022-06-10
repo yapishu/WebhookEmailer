@@ -76,7 +76,7 @@ then
                         fi
                 sqlite3 $DB '.mode csv' '.import import.csv planets'
                 rm -f import.csv
-                echo "IMPORTED_FILE"
+                echo "IMPORTED_FILE" | tee -a $CSV_FILE
                 mv $CSV_FILE IMPORTED_${CSV_FILE}
                 echo "$TIMESTAMP // Database created"
         fi
