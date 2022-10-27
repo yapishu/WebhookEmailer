@@ -1,0 +1,7 @@
+access-key-id: ${S3_ACCESS} 
+secret-access-key: ${S3_SECRET} 
+
+dbs:
+  - path: /db/db.sq3
+    replicas:
+      - url: s3://${S3_URL}/planet-store
