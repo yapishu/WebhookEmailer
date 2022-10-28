@@ -8,28 +8,25 @@ from sendgrid.helpers.mail import Mail, From, To
 from boto3 import session
 from botocore.client import Config
 
-# TODO
-# Import CSV
-# Generate stats
 
 logging.root.setLevel(logging.INFO)
 logging.basicConfig(filename="/data/hook.log", level=os.environ.get("LOGLEVEL", "INFO"))
 
 db_path = '/data/db.sq3'
+csv_path = '/data/planets.csv'
+csv_exists = exists(csv_path)
+db_exists = exists(db_path)
 db = sqlite3.connect(db_path, isolation_level=None)
-db.execute('pragma journal_mode=wal;')
-db.execute('CREATE TABLE IF NOT EXISTS planets_sold AS \
-    SELECT * FROM planets WHERE Email IS NOT NULL;')
-db.execute('CREATE TABLE IF NOT EXISTS planets_listed AS \
-    SELECT * FROM planets WHERE 0;')
 
-# Migrate old sales
-query = 'INSERT INTO planets_sold SELECT * FROM planets WHERE Email IS NOT NULL;'
-query ='DELETE FROM planets WHERE Email IS NOT NULL;'
+def create_tables():
+    db.execute('pragma journal_mode=wal;')
+    db.execute('CREATE TABLE IF NOT EXISTS planets_sold AS \
+        SELECT * FROM planets WHERE Email IS NOT NULL;')
+    db.execute('CREATE TABLE IF NOT EXISTS planets_listed AS \
+        SELECT * FROM planets WHERE 0;')
 
 api_key = os.getenv('API_KEY')
 sg_api = os.getenv('SG_API')
-template_id = os.getenv('TEMPLATE_ID')
 url = os.getenv('URL')
 s3_access = os.getenv('S3_ACCESS')
 s3_secret = os.getenv('S3_SECRET')
@@ -47,18 +44,50 @@ s3 = boto3.resource('s3')
 headers = {"Content-Type": "application/json",
         "Authorization": f"Basic {api_key}"}
 
-db_exists = exists(db_path)
-csv_exists = exists('planets.csv')
-if csv_exists == True:
-    logging.info('import_csv()')
-if (db_exists == False) and (csv_exists == False):
-    logging.error('• No DB/No CSV -- exiting')
-    sys.exit()
+def vacuum(table):
+    conn = sqlite3.connect(db_path, isolation_level=None)
+    cur = conn.cursor()
+    query = f'VACUUM;'
+    cur.execute(query)
+    query = f'UPDATE {table} SET Number = rowid;'
+    cur.execute(query)
+    conn.commit()
 
 def import_csv():
-    conn = sqlite3.connect(db_path, isolation_level=None)
-    dedupe = 'DELETE FROM planets WHERE rowid NOT IN (SELECT MIN(rowid) FROM planets GROUP BY Planet);'
-    return
+    try:
+        with open(csv_path) as f:
+            lines = f.readlines()
+        lines[0] = "Number,Planet,Invite URL,Point,Ticket,Email,Timestamp\n"
+        with open(csv_path, "w") as f:
+            f.writelines(lines)
+        result = subprocess.run(['sqlite3',
+                                str(db_path),
+                                '-cmd',
+                                '.mode csv',
+                                '.import ' 
+                                + csv_path
+                                + ' planets'],
+                                capture_output=True)
+        logging.info(f'• Imported CSV to planets: {result}')
+        conn = sqlite3.connect(db_path, isolation_level=None)
+        cur = conn.cursor()
+        dedupe = 'DELETE FROM planets WHERE rowid NOT IN (SELECT MIN(rowid) FROM planets GROUP BY Planet);'
+        cur.execute(dedupe)
+        vacuum('planets')
+        conn.commit()
+        return True
+    except Exception as e:
+        logging.exception(f'• Error importing: {e}')
+        sys.exit()
+
+if db_exists == True:
+    create_tables()
+    if csv_exists == True:
+        logging.info('• Importing `data/planets.csv`')
+        import_csv()
+else:
+    logging.error('• Need initialized DB: manually import CSV')
+    sys.exit()
 
 def dict_factory(cursor, row):
     d = {}
@@ -67,7 +96,7 @@ def dict_factory(cursor, row):
     return d
 
 def get_val(db,lookup,key,value):
-    query = f'SELECT "{lookup}" FROM planets WHERE "{key}" is "{value}" LIMIT 1;'
+    query = f'SELECT "{lookup}" FROM {db} WHERE "{key}" is "{value}" LIMIT 1;'
     conn = sqlite3.connect(db_path, isolation_level=None)
     conn.row_factory = dict_factory
     cur = conn.cursor()
@@ -88,13 +117,9 @@ def move_val(source,lookup,identifier,dest):
     cur.execute(query)
     query = f'DELETE FROM {source} WHERE {lookup} is {identifier};'
     cur.execute(query)
-    query = f'VACUUM;'
-    cur.execute(query)
-    query = f'UPDATE {source} SET Number = rowid;'
-    cur.execute(query)
-    query = f'UPDATE {dest} SET Number = rowid;'
-    cur.execute(query)
     conn.commit()
+    vacuum(source)
+    vacuum(dest)
 
 def get_next_avail():
     conn = sqlite3.connect(db_path, isolation_level=None)
@@ -110,12 +135,20 @@ def get_next_avail():
         result = answer_json[0]['Planet']
         return result
 
-def get_last_avail():
-    conn = sqlite3.connect(db_path, isolation_level=None)
-    query = 'SELECT Planet FROM planets WHERE Email is NULL ORDER BY rowid DESC LIMIT 1;'
-    cur = conn.cursor()
-    cur.execute(query)
-    answer_raw = cur.execute(query).fetchall()
+def get_last_avail(table=None):
+    if table == 'planets_sold':
+        # Return the most recently sold
+        conn = sqlite3.connect(db_path, isolation_level=None)
+        query = f'SELECT Planet FROM planets_sold WHERE Email is NOT NULL ORDER BY rowid DESC LIMIT 1;'
+        cur = conn.cursor()
+        cur.execute(query)
+        answer_raw = cur.execute(query).fetchall()
+    else:
+        conn = sqlite3.connect(db_path, isolation_level=None)
+        query = 'SELECT Planet FROM planets WHERE Email is NULL ORDER BY rowid DESC LIMIT 1;'
+        cur = conn.cursor()
+        cur.execute(query)
+        answer_raw = cur.execute(query).fetchall()
     if not answer_raw:
         return None
     else:
@@ -165,12 +198,15 @@ def is_sold(planet):
         return True
 
 def purchase_planet(planet,email):
-    # If specific planet:
-    db = 'planets_listed'
-    if planet == 'planet':
+    # If random:
+    if planet == 'Planet':
         planet = get_next_avail()
         db = 'planets'
-    exists = get_val('planets','rowid','Planet',planet)
+        exists = True
+    else:
+    # If specific planet:
+        db = 'planets_listed'
+        exists = get_val(db,'rowid','Planet',planet)
     if exists == None:
         logging.warning(f'• {planet} Not listed; may be dupe webhook call')
         return False
@@ -180,20 +216,22 @@ def purchase_planet(planet,email):
     email_sale(email,planet,code,code_text)
     upd_val(db,'Timestamp',time,'Planet',planet)
     upd_val(db,'Email',email,'Planet',planet)
-    planet_id = get_val('planets','rowid','Planet',planet)
-    move_val('planets','rowid',planet_id,'planets_sold')
+    planet_id = get_val(db,'rowid','Planet',planet)
+    move_val(db,'rowid',planet_id,'planets_sold')
     logging.info(f'• {planet} marked as sold')
 
 def email_sale(email,planet_name,planet_code,code_text):
+    template_id = os.getenv('TEMPLATE_ID')
     if email == None:
         logging.warning(f'{planet_name}: No email extracted!')
-        return False
+        email = 'matwet+error@subject.network'
+        # return False
     message = Mail(
         from_email='matwet@subject.network',
         to_emails=email,
         subject='🚀Your Urbit is ready'
         )
-    message.add_bcc('matwet+sold@subject.network')
+    message.add_bcc('matwet@subject.network')
     message.template_id = template_id
     message.dynamic_template_data = {
         'planet-code': planet_code,
@@ -201,11 +239,12 @@ def email_sale(email,planet_name,planet_code,code_text):
         'code-text': code_text
     }
     try:
-        sg = SendGridAPIClient(sg_api)
+        sg = SendGridAPIClient(os.environ.get('SG_API'))
         response = sg.send(message)
         logging.info('• Sale email sent')
         logging.info(response.status_code)
     except Exception as e:
+        e = e.to_dict()
         logging.exception(f'• {e}')
     return
 
@@ -214,7 +253,7 @@ def inventory_gen(num):
     inv = open("/data/inventory/inv.txt", "w+")
     inv.write(f'''Planet:
   title: planet
-  price: 10
+  price: 15
   image: https://urbits3.ams3.digitaloceanspaces.com/anim2.gif
   price_type: fixed
   disabled: false
@@ -245,7 +284,7 @@ def inventory_gen(num):
         inv.write(f'''{planet}:
   title: {planet}
   price: 15
-  image: https://{s3_url}/urbits3/sigils/{planet}.svg
+  image: https://{s3_url}/{bucket}/sigils/{planet}.svg
   price_type: fixed
   disabled: false
   inventory: 1
@@ -266,13 +305,16 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def stats():
-    # avail = get_last_avail()
-    # avail = get_val('planets','rowid','Planet',avail)
-    # avail = {'available':avail}
-    # sold = 
-    # recent = {'most_recent':{'planet':planet,'buyer':email}
-    # return jsonify(avail,sold,recent)
-    return True
+    avail = get_last_avail()
+    avail = get_val('planets','rowid','Planet',avail)
+    avail = {'available':avail}
+    sold = get_last_avail(table='planets_sold')
+    planet = sold
+    sold = get_val('planets_sold','rowid','Planet',planet)
+    sold = {'sold':sold}
+    email = get_val('planets_sold','Email','Planet',planet)
+    recent = {'most_recent':{'planet':planet,'buyer':email}}
+    return jsonify(avail,sold,recent)
 
 @app.route('/listen', methods=['POST'])
 def hook():
