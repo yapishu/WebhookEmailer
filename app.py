@@ -280,6 +280,7 @@ def inventory_gen(num):
         sig.write(output)
         sig.close()
         s3_upload(sig_path)
+        os.remove(sig_path)
         inv = open("/data/inventory/inv.txt", "a")
         inv.write(f'''{planet}:
   title: {planet}
@@ -294,6 +295,30 @@ def inventory_gen(num):
         inv.close()
         move_val('planets','Number',end,'planets_listed')
         end -= 1
+
+def rand_sigil_gen():
+    Path("/data/inventory/img").mkdir(parents=True, exist_ok=True)
+    last_planet = get_last_avail()
+    last_uid = int(get_val('planets','Number','Planet',last_planet))
+    first_uid = 1
+    print(f'• Generating inventory for rows {first_uid}-{last_uid}')
+    begin, end = first_uid, last_uid
+    while begin <= end:
+        planet = get_val('planets','Planet','Number',begin)
+        print(f'Generating {planet}')
+        sig_path = f'/data/inventory/img/{planet}.svg'
+        cmd = f'echo "{planet}"|/app/sigil/sigil'
+        process = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        process.wait()
+        output, error = process.communicate()
+        output = output.decode("utf-8")
+        output = output.replace("'black'", '"#333"')
+        sig = open(sig_path, "w+")
+        sig.write(output)
+        sig.close()
+        s3_upload(sig_path)
+        os.remove(sig_path)
+        begin += 1
 
 def s3_upload(filepath):
     name = os.path.basename(filepath)
