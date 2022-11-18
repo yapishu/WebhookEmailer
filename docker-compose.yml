@@ -1,0 +1,36 @@
+---
+version: "3.8"
+services:
+  hook:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: sale-hook
+    ports:
+      - 5000:5000
+    environment:
+      - API_KEY
+      - SG_API
+      - TEMPLATE_ID
+      - URL
+      - S3_URL
+      - S3_ACCESS
+      - S3_SECRET
+      - S3_BUCKET
+      - GIFT_AUTH
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+  litestream:
+    image: litestream/litestream:latest
+    container_name: litestream
+    entrypoint: 
+      - litestream 
+      - replicate
+    environment:
+      - S3_URL
+      - S3_ACCESS
+      - S3_SECRET
+    volumes:
+      - ./data:/db
+      - ./litestream.yml:/etc/litestream.yml
