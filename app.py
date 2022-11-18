@@ -24,6 +24,8 @@ def create_tables():
         SELECT * FROM planets WHERE Email IS NOT NULL;')
     db.execute('CREATE TABLE IF NOT EXISTS planets_listed AS \
         SELECT * FROM planets WHERE 0;')
+    db.commit()
+    db.close()
 
 api_key = os.getenv('API_KEY')
 sg_api = os.getenv('SG_API')
@@ -32,6 +34,7 @@ s3_access = os.getenv('S3_ACCESS')
 s3_secret = os.getenv('S3_SECRET')
 s3_url = os.getenv('S3_URL')
 bucket = os.getenv('S3_BUCKET')
+gift_auth = os.getenv('GIFT_AUTH')
 
 session = session.Session()
 s3client = session.client('s3',
@@ -357,6 +360,22 @@ def hook():
         logging.info(f'• Selling {planet} to {email}')
         purchase_planet(planet,email)
     return jsonify(status = 'ok'),200
+
+@app.route('/gift',methods=['POST'])
+def gift():
+    try:
+        content = request.get_json()
+        auth = content.get('auth')
+        email = content.get('email')
+        if auth == gift_auth:
+            planet = get_next_avail()
+            logging.info(f'• Gifting {planet} to {email}')
+            purchase_planet('Planet',email)
+            return jsonify(status = 'ok'),200
+        else:
+            return jsonify(status = 'auth failure'),401
+    except Exception as e:
+        return jsonify(status = f'{e}'),500
 
 if __name__ == "__main__":
   app.run(host='0.0.0.0')

@@ -17,6 +17,7 @@ services:
       - S3_ACCESS
       - S3_SECRET
       - S3_BUCKET
+      - GIFT_AUTH
     volumes:
       - ./data:/data
     restart: unless-stopped
