@@ -14,17 +14,15 @@ You need docker & compose installed, and a BTCPayServer store installed and conf
 
 Copy the variables from the compose file into a `.env` file and assign them:
 
-```
-- API_KEY -- the BTCPay API key
-- SG_API -- SendGrid API key
-- TEMPLATE_ID -- SendGrid dynamic template ID
-- URL -- URL for BTCPay that is accessible from inside container (`http://172.20.0.1:80` or whatever the docker gateway IP is should work)
-- S3_URL -- S3 API endpoint
-- S3_ACCESS -- S3 access key
-- S3_SECRET -- S3 secret key
-- S3_BUCKET -- S3 bucket name
-- GIFT_AUTH -- Password used to send gift planets
-```
+- `API_KEY` -- the BTCPay API key
+- `SG_API` -- SendGrid API key
+- `TEMPLATE_ID` -- SendGrid dynamic template ID
+- `URL` -- URL for BTCPay that is accessible from inside container (`http://172.20.0.1:80` or whatever the docker gateway IP is should work)
+- `S3_URL` -- S3 API endpoint
+- `S3_ACCESS` -- S3 access key
+- `S3_SECRET` -- S3 secret key
+- `S3_BUCKET` -- S3 bucket name
+- `GIFT_AUTH` -- Password used to send gift planets
 
 Note that I've had [issues](https://github.com/benbjohnson/litestream/issues/435) with Litestream behaving badly on S3 providers other than [DigitalOcean](https://m.do.co/c/4da920651e1a) (referral).
 
