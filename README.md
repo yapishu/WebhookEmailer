@@ -2,9 +2,11 @@
 
 ## Introduction
 
-This is my project to connect [BTCPay Server](https://github.com/btcpayserver/btcpayserver), [SendGrid](https://sendgrid.com/), and simple database management. This will allow you to collect payment from BTCPay, and automatically trigger an email with a planet code to the email submitted by the customer after payment is confirmed. This repo contains the webhook configuration, and the shell script that it triggers. This configuration assumes you are running the webhook on the host device running the Docker container, but you don't have to.
+This is my project to connect [BTCPay Server](https://github.com/btcpayserver/btcpayserver), [SendGrid](https://sendgrid.com/), and simple database management. The first two versions of this were a shell script and webhook configuration, this is a Python- and Docker-ized version with additinoal functionality. 
 
-You need to have a SendGrid account with a validated email, API key, and [dynamic template](https://mc.sendgrid.com/dynamic-templates) -- you get 100 emails/day with a free account. You will also need to provide it with a CSV of planets & codes, but a test set is included.
+This script will allow you to collect payment from BTCPay, and automatically trigger an email with a planet code to the email submitted by the customer after payment is confirmed. This repo contains a dockerized Flask script. This configuration assumes you are running the container on the host device running the Docker container, but you don't have to.
+
+You need to have a SendGrid account with a validated email, API key, and [dynamic template](https://mc.sendgrid.com/dynamic-templates) -- you get 100 emails/day with a free account. You will also need to provide it with a CSV of planets & codes, but a test set is included. Delete `db.sq3` to clear the state.
 
 ## Configuration
 
@@ -24,11 +26,13 @@ Copy the variables from the compose file into a `.env` file and assign them:
 - GIFT_AUTH -- Password used to send gift planets
 ```
 
-Note that I've had issues with Litestream behaving badly on S3 providers other than DigitalOcean.
+Note that I've had [issues](https://github.com/benbjohnson/litestream/issues/435) with Litestream behaving badly on S3 providers other than [DigitalOcean](https://m.do.co/c/4da920651e1a) (referral).
 
 The container will use the `./data` directory to store the DB. Copy the template DB into this directory and name it `db.sq3`.
 
-When script runs, it will look for a CSV named `planets.csv` and import it into a DB, then mark it as imported. It will not re-import a CSV if it has 'IMPORTED_DATA' appended to it. 
+After your variables are set, simply run `docker-compose up -d`.
+
+When app runs, it will look for a CSV named `./data/planets.csv` and import it into a DB, then mark it as imported. It will not re-import a CSV if it has 'IMPORTED_DATA' appended to it. 
 
 You can easily query the sales stats of the DB by GETing the `/` route (root path).
 
