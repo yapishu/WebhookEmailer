@@ -1,6 +1,8 @@
 # Layer 2 Webhook Emailer
 
-## Introduction
+## Overview
+
+See a live version of this implementation at the [subject.network](https://subject.network/buy) planet store.
 
 This is my project to connect [BTCPay Server](https://github.com/btcpayserver/btcpayserver), [SendGrid](https://sendgrid.com/), and simple database management. The first two versions of this were a shell script and webhook configuration, this is a Python- and Docker-ized version with additional functionality, including automatic listings generated for BTCPay (but you'll still need to manually paste them in).
 
