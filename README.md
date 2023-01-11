@@ -46,7 +46,7 @@ This version (v3) includes functions to automatically generate BTCPay listings i
 
 This function is not exposed so you'll need to get a REPL shell and run the following commands:
 
-```
+```bash
 docker exec -it sales-hook /bin/bash
 cd app
 python
