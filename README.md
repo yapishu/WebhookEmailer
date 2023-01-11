@@ -54,7 +54,7 @@ import app
 app.inventory_gen(50)
 ```
 
-This will generate 50 individual planet listings and take the planets out of the random pool (which is the default). The listings will be output to `.//data/inventory/inv.txt`.
+This will generate 50 individual planet listings and take the planets out of the random pool (which is the default). The listings will be output to `./data/inventory/inv.txt`.
 
 You can paste the content of the text into the store's listings.
 
