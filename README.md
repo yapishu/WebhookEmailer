@@ -37,7 +37,7 @@ When app runs, it will look for a CSV named `./data/planets.csv` and import it i
 You can easily query the sales stats of the DB by GETing the `/` route (root path).
 
 
-## Connecting to BtcTransmuter
+## Connecting to BtcPay
 
 At the bottom of your store's page, expand the 'Notification URL Callbacks' modal and enter `http://sales-hook:5000` or `http://172.20.0.1:5000` as the URL (or whatever the address is as reachable from BTCPay).
 
